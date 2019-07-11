@@ -50,7 +50,7 @@ public class CallbackServiceImpl implements CallbackService {
                     }
                 }
             }
-        }, 0, 5000);
+        }, 0, 1000);
     }
 
     private static long byteToM(long bytes){
