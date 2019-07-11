@@ -38,11 +38,12 @@ public class CallbackServiceImpl implements CallbackService {
                             //线程总数
                             int threadCount = ManagementFactory.getThreadMXBean().getThreadCount();
 
-                            entry.getValue().receiveServerMsg(System.getProperty("quota") + " " + new Date().toString()+
-                                    " 内存占比："+new BigDecimal(Double.valueOf(totalMemory-freeMemory)/Double.valueOf(maxMemory)).setScale(2, BigDecimal.ROUND_HALF_UP)
-                                    +" freeMemory："+byteToM(freeMemory)
-                                    +" totalMemory："+byteToM(totalMemory)
-                                    + " maxMemory："+byteToM(maxMemory)+" threadCount："+threadCount);
+//                            entry.getValue().receiveServerMsg(System.getProperty("quota") + " " + new Date().toString()+
+//                                    " 内存占比："+new BigDecimal(Double.valueOf(totalMemory-freeMemory)/Double.valueOf(maxMemory)).setScale(2, BigDecimal.ROUND_HALF_UP)
+//                                    +" freeMemory："+byteToM(freeMemory)
+//                                    +" totalMemory："+byteToM(totalMemory)
+//                                    + " maxMemory："+byteToM(maxMemory)+" threadCount："+threadCount);
+                            entry.getValue().receiveServerMsg("{"+System.getProperty("quota")+"} threadCount:"+threadCount);
                         } catch (Throwable t1) {
                             listeners.remove(entry.getKey());
                         }

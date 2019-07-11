@@ -20,6 +20,10 @@ public class TestClientFilter implements Filter {
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
         try{
+            String url = invoker.getUrl().toString();
+            String server = url.substring(url.indexOf("-")+1);
+            server = server.substring(0,server.indexOf(":"));
+
             Result result = invoker.invoke(invocation);
             //System.out.println("size:"+result.getAttachments().size());
             //System.out.println("value:"+result.getValue().toString());
