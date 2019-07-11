@@ -1,0 +1,6 @@
+com\aliware\tianchi\HashServiceImpl.class
+com\aliware\tianchi\InternalSemaphore.class
+com\aliware\tianchi\ThrashConfig.class
+com\aliware\tianchi\MyProvider.class
+com\aliware\tianchi\policy\BaseConfig.class
+com\aliware\tianchi\policy\GlobalConf.class
