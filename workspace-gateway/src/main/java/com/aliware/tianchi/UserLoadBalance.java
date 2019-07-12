@@ -36,15 +36,17 @@ public class UserLoadBalance implements LoadBalance {
     public static Map<String, Integer> threadCountMap = new HashMap<String, Integer>();
 
     //权重相关
-    public static String[] servers = new String[3];//服务器
-    public static Integer[] weight = new Integer[3];//服务器的权重
+    //public static String[] servers = new String[serverNum];//服务器
+    public static String[] servers = new String[]{"small","large","medium"};//服务器
+    public static Integer[] weight = new Integer[serverNum];//服务器的权重
     public long weightDuration = 1000;//多久计算一次权重
     public static long time0 = System.currentTimeMillis();
     public static Integer weightCount;//权重的和
 
 
-    //响应时间，key=服务标识，value=每个响应的时间、响应的时长
+    //响应时间，key=服务标识，value=每个响应的时间、响应的时长。如果失败则认为响应时长800ms
     public static Map<String, Map<Long, Integer>> rspTimeMap = new HashMap<String, Map<Long, Integer>>();
+    public static int errorDelayTime = 800;
 
 //    private static final
 
@@ -56,11 +58,7 @@ public class UserLoadBalance implements LoadBalance {
             long curTime = System.currentTimeMillis();
             if (curTime - time0 > weightDuration) {
                 //重新计算权重
-                weightCount = 0;
-                for (int i = 0; i < serverNum; i++) {
-                    weight[i] = threadCountMap.get(servers[i]);
-                    weightCount += weight[i];
-                }
+                countWeight();
             }
             int randomValue = ThreadLocalRandom.current().nextInt(weightCount);
             int curValue = 0;
@@ -83,5 +81,18 @@ public class UserLoadBalance implements LoadBalance {
             }
         }
         return invokers.get(ThreadLocalRandom.current().nextInt(invokers.size()));
+    }
+
+    public void countWeight() {
+        weightCount = 0;
+        for (int i = 0; i < serverNum; i++) {
+            weight[i] = threadCountMap.get(servers[i]);
+            weightCount += weight[i];
+        }
+
+        //计算响应时间的map，将里面的过期时间去掉，并计算剩余的时间的平均值
+//        for(int i=0; i<serverNum; i++) {
+//            rspTimeMap.keySet();
+//        }
     }
 }

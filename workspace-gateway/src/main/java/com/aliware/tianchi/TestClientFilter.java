@@ -8,6 +8,9 @@ import org.apache.dubbo.rpc.Invoker;
 import org.apache.dubbo.rpc.Result;
 import org.apache.dubbo.rpc.RpcException;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * @author daofeng.xjf
  *
@@ -19,19 +22,39 @@ import org.apache.dubbo.rpc.RpcException;
 public class TestClientFilter implements Filter {
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
+        String url = invoker.getUrl().toString();
+        String server = url.substring(url.indexOf("-")+1);
+        server = server.substring(0,server.indexOf(":"));
+        long startTime = System.currentTimeMillis();
         try{
-            String url = invoker.getUrl().toString();
-            String server = url.substring(url.indexOf("-")+1);
-            server = server.substring(0,server.indexOf(":"));
-
             Result result = invoker.invoke(invocation);
-            //System.out.println("size:"+result.getAttachments().size());
-            //System.out.println("value:"+result.getValue().toString());
+            long endTime = System.currentTimeMillis();
+            Integer duration = Long.valueOf(endTime - startTime).intValue();
+            if (result.hasException()) {
+                duration = UserLoadBalance.errorDelayTime;
+            }
+            Map<Long, Integer> map0 =
+            UserLoadBalance.rspTimeMap.get(server);
+            if (map0 == null) {
+                map0 = new HashMap<>();
+            }
+            map0.put(endTime, duration);
+            UserLoadBalance.rspTimeMap.put(server, map0);
+
             return result;
         }catch (Exception e){
+            long endTime = System.currentTimeMillis();
+            Integer duration = UserLoadBalance.errorDelayTime;
+            Map<Long, Integer> map0 =
+                    UserLoadBalance.rspTimeMap.get(server);
+            if (map0 == null) {
+                map0 = new HashMap<>();
+            }
+            map0.put(endTime, duration);
+            UserLoadBalance.rspTimeMap.put(server, map0);
+
             throw e;
         }
-
     }
 
     @Override
