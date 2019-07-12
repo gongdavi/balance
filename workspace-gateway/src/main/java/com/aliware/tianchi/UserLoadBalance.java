@@ -31,13 +31,13 @@ public class UserLoadBalance implements LoadBalance {
     public static BigDecimal largeThread = new BigDecimal(0);
     public static BigDecimal mediumThread = new BigDecimal(0);
 
-    private static final int serverNum = 3;
+    public static final int serverNum = 3;
     //线程Map，key=服务标识，value=服务对应的线程数
     public static Map<String, Integer> threadCountMap = new HashMap<String, Integer>();
 
     //权重相关
-    //public static String[] servers = new String[serverNum];//服务器
-    public static String[] servers = new String[]{"small","large","medium"};//服务器
+    public static String[] servers = new String[serverNum];//服务器
+    //public static String[] servers = new String[]{"small","large","medium"};//服务器
     public static Integer[] weight = new Integer[serverNum];//服务器的权重
     public long weightDuration = 1000;//多久计算一次权重
     public static long time0 = System.currentTimeMillis();
@@ -52,13 +52,15 @@ public class UserLoadBalance implements LoadBalance {
 
     @Override
     public <T> Invoker<T> select(List<Invoker<T>> invokers, URL url, Invocation invocation) throws RpcException {
-        if (threadCountMap.size() < serverNum || threadCountMap.values().iterator().next() < 50) {
+        //如果权重条件不符合，则随机传递
+        if (threadCountMap.size() < serverNum || threadCountMap.values().iterator().next() < 50 || servers[serverNum-1] == null) {
             return invokers.get(ThreadLocalRandom.current().nextInt(invokers.size()));
         } else {
             long curTime = System.currentTimeMillis();
             if (curTime - time0 > weightDuration) {
-                //重新计算权重
+                //重新计算权重，间隔1s
                 countWeight();
+                time0 = curTime;
             }
             int randomValue = ThreadLocalRandom.current().nextInt(weightCount);
             int curValue = 0;
@@ -83,6 +85,7 @@ public class UserLoadBalance implements LoadBalance {
         return invokers.get(ThreadLocalRandom.current().nextInt(invokers.size()));
     }
 
+    //计算权重
     public void countWeight() {
         weightCount = 0;
         for (int i = 0; i < serverNum; i++) {
