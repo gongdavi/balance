@@ -10,6 +10,7 @@ import org.apache.dubbo.rpc.RpcException;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * @author daofeng.xjf
@@ -33,24 +34,22 @@ public class TestClientFilter implements Filter {
             if (result.hasException()) {
                 duration = UserLoadBalance.errorDelayTime;
             }
-            Map<Long, Integer> map0 =
-            UserLoadBalance.rspTimeMap.get(server);
+            Map<String, Integer> map0 = UserLoadBalance.rspTimeMap.get(server);
             if (map0 == null) {
                 map0 = new HashMap<>();
             }
-            map0.put(endTime, duration);
+            map0.put(endTime + "-" + UUID.randomUUID().toString().replaceAll("-",""), duration);
             UserLoadBalance.rspTimeMap.put(server, map0);
 
             return result;
         }catch (Exception e){
             long endTime = System.currentTimeMillis();
             Integer duration = UserLoadBalance.errorDelayTime;
-            Map<Long, Integer> map0 =
-                    UserLoadBalance.rspTimeMap.get(server);
+            Map<String, Integer> map0 = UserLoadBalance.rspTimeMap.get(server);
             if (map0 == null) {
                 map0 = new HashMap<>();
             }
-            map0.put(endTime, duration);
+            map0.put(endTime + "-" + UUID.randomUUID().toString().replaceAll("-",""), duration);
             UserLoadBalance.rspTimeMap.put(server, map0);
 
             throw e;

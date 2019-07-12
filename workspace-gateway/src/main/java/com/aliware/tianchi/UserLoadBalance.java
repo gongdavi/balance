@@ -7,9 +7,7 @@ import org.apache.dubbo.rpc.RpcException;
 import org.apache.dubbo.rpc.cluster.LoadBalance;
 
 import java.math.BigDecimal;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collector;
 
@@ -36,18 +34,21 @@ public class UserLoadBalance implements LoadBalance {
     public static Map<String, Integer> threadCountMap = new HashMap<String, Integer>();
 
     //权重相关
-    public static String[] servers = new String[serverNum];//服务器
-    //public static String[] servers = new String[]{"small","large","medium"};//服务器
+    //public static String[] servers = new String[serverNum];//服务器
+    public static String[] servers = new String[]{"small","large","medium"};//服务器
     public static Integer[] weight = new Integer[serverNum];//服务器的权重
-    public long weightDuration = 1000;//多久计算一次权重
+    public long weightDuration = 50;//多久计算一次权重
     public static long time0 = System.currentTimeMillis();
     public static Integer weightCount;//权重的和
 
 
     //响应时间，key=服务标识，value=每个响应的时间、响应的时长。如果失败则认为响应时长800ms
-    public static Map<String, Map<Long, Integer>> rspTimeMap = new HashMap<String, Map<Long, Integer>>();
+    public static Map<String, Map<String, Integer>> rspTimeMap = new HashMap<String, Map<String, Integer>>();
     public static int errorDelayTime = 800;
-
+    public static Integer[] rspAvgTime = new Integer[serverNum];//一段时间内的请求平均响应时间
+    public static Integer rspAvgTimeCount = 0;
+    public static Integer[] rspNum = new Integer[serverNum];//一段时间内的请求个数
+    public static Integer rspNumCount = 0;
 //    private static final
 
     @Override
@@ -60,6 +61,7 @@ public class UserLoadBalance implements LoadBalance {
             if (curTime - time0 > weightDuration) {
                 //重新计算权重，间隔1s
                 countWeight();
+                //time0 = curTime;//线程权重，不加这行可以达到120W，加上后仅17W，实时计算的话会比较好。
                 time0 = curTime;
             }
             int randomValue = ThreadLocalRandom.current().nextInt(weightCount);
@@ -88,14 +90,46 @@ public class UserLoadBalance implements LoadBalance {
     //计算权重
     public void countWeight() {
         weightCount = 0;
+
+        //根据服务器线程数计算权重
+//        for (int i = 0; i < serverNum; i++) {
+//            weight[i] = threadCountMap.get(servers[i]);
+//            weightCount += weight[i];
+//        }
+
+        //根据响应时间及个数判断权重
+
+        //计算所有服务器的平均响应时间、请求个数
+        long currTime = System.currentTimeMillis();
+        rspAvgTimeCount = 0;
+        rspNumCount = 0;
         for (int i = 0; i < serverNum; i++) {
-            weight[i] = threadCountMap.get(servers[i]);
+            Map<String, Integer> rspAllMap = rspTimeMap.get(servers[i]);
+            int validNum = 1;//仍然有效的响应时长的个数，不能为0
+            int validTime = errorDelayTime;//仍然有效的响应时长的总时长
+            Set rspAllSet = rspAllMap.keySet();
+            Iterator rspAllIter = rspAllSet.iterator();
+            while (rspAllIter.hasNext()) {
+                String key = (String)rspAllIter.next();
+                long mapTime = Long.valueOf(key.substring(0, key.indexOf("-")));
+                if (currTime - mapTime > 1000) {//超过1s则认为无效
+                    rspTimeMap.remove(key);
+                } else {
+                    validNum ++;
+                    validTime += rspAllMap.get(key);
+                }
+            }
+            rspAvgTime[i] = 100 - validTime/validNum;
+            rspAvgTime[i] = rspAvgTime[i]<10?10:rspAvgTime[i];
+            rspAvgTimeCount += rspAvgTime[i];
+            rspNum[i] = validNum;
+            rspNumCount += rspNum[i];
+        }
+        for (int i = 0; i < serverNum; i++) {
+            weight[i] = rspNum[i]*rspAvgTimeCount/rspNumCount+rspAvgTime[i];
             weightCount += weight[i];
+            System.out.println(System.currentTimeMillis()+" "+servers[i]+" weight:"+weight[i]+"   rspNum[i]:"+rspNum[i]+" rspNumCount:"+rspNumCount+"   rspAvgTime[i]:"+rspAvgTime[i]+" rspAvgTimeCount:"+rspAvgTimeCount);
         }
 
-        //计算响应时间的map，将里面的过期时间去掉，并计算剩余的时间的平均值
-//        for(int i=0; i<serverNum; i++) {
-//            rspTimeMap.keySet();
-//        }
     }
 }

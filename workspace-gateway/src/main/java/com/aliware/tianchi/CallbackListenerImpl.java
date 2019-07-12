@@ -17,13 +17,17 @@ public class CallbackListenerImpl implements CallbackListener {
         if (msg.indexOf("{") >= 0) {
             String serverFlag = msg.substring(msg.indexOf("{")+1, msg.indexOf("}"));
             //给服务器列表赋值
-            if(UserLoadBalance.servers[UserLoadBalance.serverNum-1] == null) {
-                for (int i = 0; i < UserLoadBalance.serverNum; i++) {
-                    if (UserLoadBalance.servers[i] == null) {
-                        UserLoadBalance.servers[i] = serverFlag;
-                    }
-                }
-            }
+//            if(UserLoadBalance.servers[UserLoadBalance.serverNum-1] == null) {
+//                for (int i = 0; i < UserLoadBalance.serverNum; i++) {
+//                    if (UserLoadBalance.servers[i] != null) {
+//                        if (UserLoadBalance.servers[i].equals(serverFlag)) {
+//                            break;
+//                        }
+//                    } else {
+//                        UserLoadBalance.servers[i] = serverFlag;
+//                    }
+//                }
+//            }
 
             Integer threadCount = Integer.valueOf(msg.substring(msg.lastIndexOf(":")+1, msg.length()));
             UserLoadBalance.threadCountMap.put(serverFlag, threadCount);
