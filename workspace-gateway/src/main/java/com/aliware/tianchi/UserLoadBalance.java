@@ -100,6 +100,7 @@ public class UserLoadBalance implements LoadBalance {
 
     //计算权重
     public void countWeight() {
+
         weightCount = 0;
 
         //根据服务器线程数计算权重
@@ -116,6 +117,7 @@ public class UserLoadBalance implements LoadBalance {
         rspNumCount = 0;
         for (int i = 0; i < serverNum; i++) {
             Map<String, Long> rspAllMap = rspTimeMap.get(servers[i]);
+            List<String> invalidList = new ArrayList<>();
             int validNum = 1;//仍然有效的响应时长的个数，不能为0
             int validTime = errorDelayTime;//仍然有效的响应时长的总时长
             Set rspAllSet = rspAllMap.keySet();
@@ -124,13 +126,17 @@ public class UserLoadBalance implements LoadBalance {
                 String key = (String)rspAllIter.next();
                 long mapTime = Long.valueOf(key.substring(0, key.indexOf("-")));
                 if (currTime - mapTime > 1000) {//超过1s则认为无效
-                    rspTimeMap.remove(key);
+                    //rspTimeMap.remove(key);
+                    invalidList.add(key);
                 } else {
                     validNum ++;
                     validTime += rspAllMap.get(key);
                 }
             }
-            rspAvgTime[i] = 100 - validTime/validNum;
+            for (String invalidInfo: invalidList) {
+                rspTimeMap.remove(invalidInfo);
+            }
+            rspAvgTime[i] = 500 - validTime/validNum;
             rspAvgTime[i] = rspAvgTime[i]<10?10:rspAvgTime[i];
             rspAvgTimeCount += rspAvgTime[i];
             rspNum[i] = validNum;

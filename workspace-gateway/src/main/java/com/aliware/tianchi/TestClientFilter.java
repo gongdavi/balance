@@ -63,7 +63,7 @@ public class TestClientFilter implements Filter {
         }catch (Exception e){
             throw e;
         } finally {
-            decrementValidNum(server);
+            //decrementValidNum(server);//放到onResponse里
         }
     }
 
@@ -91,10 +91,12 @@ public class TestClientFilter implements Filter {
         String startAttach = invocation.getAttachment(TIMEOUT_FILTER_START_TIME);
         //获取服务名
         String serverName = invocation.getAttachment("serverName");
+        //对应服务器的活跃-1
+        decrementValidNum(serverName);
         if (startAttach != null) {
             // 调用服务的耗时
             long elapsed = System.currentTimeMillis() - Long.valueOf(startAttach);
-            System.out.println("服务调用耗时："+elapsed+"  "+invoker.getUrl().toString());
+            System.out.println("服务调用耗时："+elapsed+"  "+invoker.getUrl().toString()+"   当前活跃数:"+UserLoadBalance.validNumMap.get(serverName));
             // 调用耗时超过了设置的超时
             if (invoker.getUrl() != null
                     && elapsed > invoker.getUrl().getMethodParameter(invocation.getMethodName(),
@@ -105,7 +107,6 @@ public class TestClientFilter implements Filter {
 
 
             //记录服务耗时
-
             Map<String, Long> map0 = UserLoadBalance.rspTimeMap.get(serverName);
             if (map0 == null) {
                 map0 = new HashMap<>();

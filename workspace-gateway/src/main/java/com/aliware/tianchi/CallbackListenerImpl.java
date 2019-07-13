@@ -16,7 +16,7 @@ public class CallbackListenerImpl implements CallbackListener {
     public void receiveServerMsg(String msg) {
         if (msg.indexOf("{") >= 0) {
             String serverFlag = msg.substring(msg.indexOf("{")+1, msg.indexOf("}"));
-            Integer threadCount = Integer.valueOf(msg.substring(msg.lastIndexOf(":")+1, msg.length()));
+            Integer threadCount = Integer.valueOf(msg.substring(msg.indexOf("[")+1, msg.indexOf("]")));
             UserLoadBalance.threadCountMap.put(serverFlag, threadCount);
         } else {}
         System.out.println("receive msg from server :" + msg);

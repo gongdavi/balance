@@ -4,6 +4,7 @@ import org.apache.dubbo.rpc.listener.CallbackListener;
 import org.apache.dubbo.rpc.service.CallbackService;
 
 import java.lang.management.ManagementFactory;
+import java.lang.management.OperatingSystemMXBean;
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.Map;
@@ -38,12 +39,16 @@ public class CallbackServiceImpl implements CallbackService {
                             //线程总数
                             int threadCount = ManagementFactory.getThreadMXBean().getThreadCount();
 
+                            OperatingSystemMXBean osMxBean = ManagementFactory.getOperatingSystemMXBean();
+                            double cpu = osMxBean.getSystemLoadAverage();
+
 //                            entry.getValue().receiveServerMsg(System.getProperty("quota") + " " + new Date().toString()+
 //                                    " 内存占比："+new BigDecimal(Double.valueOf(totalMemory-freeMemory)/Double.valueOf(maxMemory)).setScale(2, BigDecimal.ROUND_HALF_UP)
 //                                    +" freeMemory："+byteToM(freeMemory)
 //                                    +" totalMemory："+byteToM(totalMemory)
 //                                    + " maxMemory："+byteToM(maxMemory)+" threadCount："+threadCount);
-                            entry.getValue().receiveServerMsg("{"+System.getProperty("quota")+"} threadCount:"+threadCount);
+                            entry.getValue().receiveServerMsg("{"+System.getProperty("quota")+"} threadCount:["+threadCount+"] " +
+                                    "CPU:"+cpu+" freeMemory:"+freeMemory+" totalMemory:"+totalMemory+" maxMemory:"+maxMemory);
                         } catch (Throwable t1) {
                             listeners.remove(entry.getKey());
                         }
