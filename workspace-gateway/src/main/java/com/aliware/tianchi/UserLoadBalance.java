@@ -43,18 +43,29 @@ public class UserLoadBalance implements LoadBalance {
 
 
     //响应时间，key=服务标识，value=每个响应的时间、响应的时长。如果失败则认为响应时长800ms
-    public static Map<String, Map<String, Integer>> rspTimeMap = new HashMap<String, Map<String, Integer>>();
+    public static Map<String, Map<String, Long>> rspTimeMap = new HashMap<String, Map<String, Long>>();
     public static int errorDelayTime = 800;
     public static Integer[] rspAvgTime = new Integer[serverNum];//一段时间内的请求平均响应时间
     public static Integer rspAvgTimeCount = 0;
     public static Integer[] rspNum = new Integer[serverNum];//一段时间内的请求个数
+    public static Map<String, Integer> validNumMap = new HashMap<>();//一段时间内的活跃请求数
     public static Integer rspNumCount = 0;
 //    private static final
 
     @Override
     public <T> Invoker<T> select(List<Invoker<T>> invokers, URL url, Invocation invocation) throws RpcException {
+        if (invokers == null || invokers.isEmpty())
+            return null;
+        // 如果只有一个元素，无需负载均衡算法
+        if (invokers.size() == 1)
+            return invokers.get(0);
+        // 负载均衡算法：该方法为抽象方法，由子类实现
+        return doSelect(invokers, url, invocation);
+    }
+
+    protected <T> Invoker<T> doSelect(List<Invoker<T>> invokers, URL url, Invocation invocation) {
         //如果权重条件不符合，则随机传递
-        if (threadCountMap.size() < serverNum || threadCountMap.values().iterator().next() < 50 || servers[serverNum-1] == null) {
+        if (threadCountMap.size() < serverNum || threadCountMap.values().iterator().next() < 50) {
             return invokers.get(ThreadLocalRandom.current().nextInt(invokers.size()));
         } else {
             long curTime = System.currentTimeMillis();
@@ -104,7 +115,7 @@ public class UserLoadBalance implements LoadBalance {
         rspAvgTimeCount = 0;
         rspNumCount = 0;
         for (int i = 0; i < serverNum; i++) {
-            Map<String, Integer> rspAllMap = rspTimeMap.get(servers[i]);
+            Map<String, Long> rspAllMap = rspTimeMap.get(servers[i]);
             int validNum = 1;//仍然有效的响应时长的个数，不能为0
             int validTime = errorDelayTime;//仍然有效的响应时长的总时长
             Set rspAllSet = rspAllMap.keySet();
