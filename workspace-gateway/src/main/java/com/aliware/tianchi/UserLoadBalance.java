@@ -54,47 +54,49 @@ public class UserLoadBalance implements LoadBalance {
 
     @Override
     public <T> Invoker<T> select(List<Invoker<T>> invokers, URL url, Invocation invocation) throws RpcException {
-        if (invokers == null || invokers.isEmpty())
+        if (invokers == null || invokers.isEmpty()) {
             return null;
+        }
         // 如果只有一个元素，无需负载均衡算法
-        if (invokers.size() == 1)
+        if (invokers.size() == 1) {
             return invokers.get(0);
+        }
         // 负载均衡算法：该方法为抽象方法，由子类实现
         return doSelect(invokers, url, invocation);
     }
 
     protected <T> Invoker<T> doSelect(List<Invoker<T>> invokers, URL url, Invocation invocation) {
         //如果权重条件不符合，则随机传递
-        if (threadCountMap.size() < serverNum || threadCountMap.values().iterator().next() < 50) {
-            return invokers.get(ThreadLocalRandom.current().nextInt(invokers.size()));
-        } else {
-            long curTime = System.currentTimeMillis();
-            if (curTime - time0 > weightDuration) {
-                //重新计算权重，间隔1s
-                countWeight();
-                //time0 = curTime;//线程权重，不加这行可以达到120W，加上后仅17W，实时计算的话会比较好。
-                time0 = curTime;
-            }
-            int randomValue = ThreadLocalRandom.current().nextInt(weightCount);
-            int curValue = 0;
-            String serverFlag = "";
-            for(int i=0; i<serverNum; i++) {
-                curValue += weight[i];
-                if (randomValue <= curValue) {
-                    serverFlag = servers[i];
-                    break;
-                }
-            }
-            for(int i=0; i<invokers.size(); i++) {
-                Invoker invoker = invokers.get(i);
-                if(invoker.getUrl().toString().indexOf(serverFlag) > 0) {
-                    return invoker;
-                }
-                if (i == invokers.size() -1) {
-                    return invoker;
-                }
-            }
-        }
+//        if (threadCountMap.size() < serverNum || threadCountMap.values().iterator().next() < 50) {
+//            return invokers.get(ThreadLocalRandom.current().nextInt(invokers.size()));
+//        } else {
+//            long curTime = System.currentTimeMillis();
+//            if (curTime - time0 > weightDuration) {
+//                //重新计算权重，间隔1s
+//                countWeight();
+//                //time0 = curTime;//线程权重，不加这行可以达到120W，加上后仅17W，实时计算的话会比较好。
+//                time0 = curTime;
+//            }
+//            int randomValue = ThreadLocalRandom.current().nextInt(weightCount);
+//            int curValue = 0;
+//            String serverFlag = "";
+//            for(int i=0; i<serverNum; i++) {
+//                curValue += weight[i];
+//                if (randomValue <= curValue) {
+//                    serverFlag = servers[i];
+//                    break;
+//                }
+//            }
+//            for(int i=0; i<invokers.size(); i++) {
+//                Invoker invoker = invokers.get(i);
+//                if(invoker.getUrl().toString().indexOf(serverFlag) > 0) {
+//                    return invoker;
+//                }
+//                if (i == invokers.size() -1) {
+//                    return invoker;
+//                }
+//            }
+//        }
         return invokers.get(ThreadLocalRandom.current().nextInt(invokers.size()));
     }
 

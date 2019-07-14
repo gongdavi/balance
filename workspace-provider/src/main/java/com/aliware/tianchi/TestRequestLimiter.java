@@ -2,6 +2,7 @@ package com.aliware.tianchi;
 
 import org.apache.dubbo.remoting.exchange.Request;
 import org.apache.dubbo.remoting.transport.RequestLimiter;
+import org.apache.dubbo.rpc.protocol.dubbo.DecodeableRpcInvocation;
 
 /**
  * @author daofeng.xjf
@@ -20,6 +21,16 @@ public class TestRequestLimiter implements RequestLimiter {
      */
     @Override
     public boolean tryAcquire(Request request, int activeTaskCount) {
+        System.out.println(activeTaskCount);
+        DecodeableRpcInvocation invocation = (DecodeableRpcInvocation)request.getData();
+        String serverName = invocation.getAttachment("serverName");
+        if ("small".equals(serverName) && activeTaskCount >=148) {
+            return false;
+        } else if ("medium".equals(serverName) && activeTaskCount >=423){
+            return false;
+        } else if ("large".equals(serverName) && activeTaskCount >=585) {
+            return false;
+        }
         return true;
     }
 
