@@ -10,6 +10,7 @@ import org.apache.dubbo.rpc.support.RpcUtils;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author daofeng.xjf
@@ -109,7 +110,7 @@ public class TestClientFilter implements Filter {
             //记录服务耗时
             Map<String, Long> map0 = UserLoadBalance.rspTimeMap.get(serverName);
             if (map0 == null) {
-                map0 = new HashMap<>();
+                map0 = new ConcurrentHashMap<>();
             }
             map0.put(startAttach + "-" + UUID.randomUUID().toString().replaceAll("-",""), elapsed);
             UserLoadBalance.rspTimeMap.put(serverName, map0);
