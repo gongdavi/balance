@@ -5,8 +5,10 @@ import org.apache.dubbo.common.extension.Activate;
 import org.apache.dubbo.monitor.MonitorService;
 import org.apache.dubbo.monitor.support.MonitorFilter;
 import org.apache.dubbo.rpc.*;
+import org.apache.dubbo.rpc.protocol.dubbo.DecodeableRpcResult;
 import org.apache.dubbo.rpc.support.RpcUtils;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -23,6 +25,9 @@ import java.util.concurrent.ConcurrentHashMap;
 public class TestClientFilter implements Filter {
 
     private static final String TIMEOUT_FILTER_START_TIME = "timeout_filter_start_time";
+    private static int exceptionNum = 0;
+    private static long PERIOD_TIME = System.currentTimeMillis();
+    private static long PERIOD_NUM = 0;
 
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
@@ -90,11 +95,16 @@ public class TestClientFilter implements Filter {
     public Result onResponse(Result result, Invoker<?> invoker, Invocation invocation) {
         // 获取开始时间
         String startAttach = invocation.getAttachment(TIMEOUT_FILTER_START_TIME);
-//        result.getException();//请求结果是否异常
+
         //获取服务名
         String serverName = invocation.getAttachment("serverName");
         //对应服务器的活跃-1
         decrementValidNum(serverName);
+
+        if (result.hasException()) {//请求结果是否异常打印出来
+            System.out.println("处理异常数量："+exceptionNum);
+        }
+
         if (startAttach != null) {
             // 调用服务的耗时
             long elapsed = System.currentTimeMillis() - Long.valueOf(startAttach);
@@ -115,6 +125,14 @@ public class TestClientFilter implements Filter {
             map0.put(startAttach + "-" + UUID.randomUUID().toString().replaceAll("-",""), elapsed);
             UserLoadBalance.rspTimeMap.put(serverName, map0);
 
+            //单位时间处理个数
+            if (System.currentTimeMillis() - PERIOD_TIME < 10000) {
+                PERIOD_NUM ++;
+            } else {
+                System.out.println(new Date().toString()+"  "+serverName+"  "+(System.currentTimeMillis()-PERIOD_TIME)+"ms  响应个数："+PERIOD_NUM );
+                PERIOD_NUM = 1;
+                PERIOD_TIME = System.currentTimeMillis();
+            }
         }
         return result;
     }
