@@ -28,6 +28,8 @@ public class TestClientFilter implements Filter {
     private static int exceptionNum = 0;
     private static long PERIOD_TIME = System.currentTimeMillis();
     private static long PERIOD_NUM = 0;
+    private static Map<String, Long> periodTimeMap = new ConcurrentHashMap<>();
+    private static Map<String, Long> periodNumMap = new ConcurrentHashMap<>();
 
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
@@ -126,12 +128,12 @@ public class TestClientFilter implements Filter {
             UserLoadBalance.rspTimeMap.put(serverName, map0);
 
             //单位时间处理个数
-            if (System.currentTimeMillis() - PERIOD_TIME < 10000) {
-                PERIOD_NUM ++;
+            if (System.currentTimeMillis() - periodTimeMap.get(serverName) < 10000) {
+                periodNumMap.put(serverName, periodNumMap.get(serverName) ==null?1l:periodNumMap.get(serverName));
             } else {
-                System.out.println(new Date().toString()+"  "+serverName+"  "+(System.currentTimeMillis()-PERIOD_TIME)+"ms  响应个数："+PERIOD_NUM );
-                PERIOD_NUM = 1;
-                PERIOD_TIME = System.currentTimeMillis();
+                System.out.println(new Date().toString()+"  "+serverName+"  "+(System.currentTimeMillis()-periodTimeMap.get(serverName))+"ms  响应个数："+periodNumMap.get(serverName) );
+                periodNumMap.put(serverName, 1l);
+                periodTimeMap.put(serverName, System.currentTimeMillis());
             }
         }
         return result;
