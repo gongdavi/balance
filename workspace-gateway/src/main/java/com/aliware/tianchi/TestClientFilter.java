@@ -90,6 +90,7 @@ public class TestClientFilter implements Filter {
     public Result onResponse(Result result, Invoker<?> invoker, Invocation invocation) {
         // 获取开始时间
         String startAttach = invocation.getAttachment(TIMEOUT_FILTER_START_TIME);
+//        result.getException();//请求结果是否异常
         //获取服务名
         String serverName = invocation.getAttachment("serverName");
         //对应服务器的活跃-1
@@ -105,7 +106,6 @@ public class TestClientFilter implements Filter {
                 System.out.println(invoker.getUrl().getMethodParameter(invocation.getMethodName(),
                         "timeout", Integer.MAX_VALUE));
             }
-
 
             //记录服务耗时
             Map<String, Long> map0 = UserLoadBalance.rspTimeMap.get(serverName);

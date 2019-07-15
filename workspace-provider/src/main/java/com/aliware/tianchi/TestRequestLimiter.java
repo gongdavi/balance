@@ -21,7 +21,6 @@ public class TestRequestLimiter implements RequestLimiter {
      */
     @Override
     public boolean tryAcquire(Request request, int activeTaskCount) {
-        System.out.println(activeTaskCount);
         DecodeableRpcInvocation invocation = (DecodeableRpcInvocation)request.getData();
         String serverName = invocation.getAttachment("serverName");
         if ("small".equals(serverName) && activeTaskCount >=148) {
